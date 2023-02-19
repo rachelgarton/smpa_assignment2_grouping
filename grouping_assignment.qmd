@@ -1,6 +1,6 @@
 ---
 title: "SMPA - Grouping Assignment"
-author: "YourNameHere"
+author: "Rachel Garton"
 date: "`r format(Sys.time(), '%B %d, %Y')`"
 format:
   html:
@@ -61,11 +61,11 @@ Take a moment to look at the various categories included for each disbursement.
 
 Without doing any analysis yet, what are three questions you might try to answer using this dataset? Write your narrative answers in the spaces below.
 
-1.  
+1.  What payee received the highest disbursement?
 
-2.  
+2.  How many recipients lived in DC and, of those, how many were disbursed for legal consulting?
 
-3.  
+3.  In descending order, what were the disbursement amounts for legal consulting?
 
 ## Coding Assignment Questions
 
@@ -81,34 +81,44 @@ How much was spent in the 2017 vs. 2018 reporting year?
 
 ```{r}
 
+payments %>% 
+  group_by(report_year) %>% 
+  summarise(total_amt = sum(disbursement_amount))
 
-
-
-
-
-
+# $16,888,149 was spent in 2017 compared to $37,406,905 that was spent in 2018.
+# How I came to this answer: I pulled how much was spent from 2017 and 2018, then I "summarized"
+# the data to reflect the sum amount between the two years. 
 ```
 
 Tally the total overall disbursement amounts for each month (distinguishing between say, Oct. 2018 v. Oct. 2019). In which month was spending the highest?
 
 ```{r}
 
+payments %>% filter(disbursement_month == 10) -> october_payments
 
+october_payments %>% 
+  group_by(disbursement_year) %>% 
+  summarise(total_amt = sum(disbursement_amount))
 
+# More was spent in Oct 2018 than in Oct 2017. The spending in October 2017 was $1,273,193 
+# compared to Oct 2018's, which was $9,738,568. 
 
-
-
+# How I came to this answer: I made a data set for October payments, then filtered by the
+# disbursement year. From there, I coded it to reflect the sum spent between the two months.
 ```
 
 Which recipient (recipient_name) was paid the most in the 2020 election cycle?
 
 ```{r}
 
+payments %>% 
+  group_by(recipient_name) %>% 
+  summarise(total_amt = sum(disbursement_amount)) %>% 
+  arrange(desc(total_amt))
 
+# American Made Media Consultants LLC was paid the most in the 2020 election cycle, with a total amount of $9,772,583.64.
 
-
-
-
+# How I came to this answer: Once I figured out that the payments only reflected the 2020 election cycle, I grouped the data by recipient name, how much they were paid, then arranged the data in descending order :)
 
 ```
 
@@ -116,10 +126,15 @@ Look at what this recipient was paid for. What service or good (see the "disburs
 
 ```{r}
 
+payments %>% 
+  filter(recipient_name == "AMERICAN MADE MEDIA CONSULTANTS, LLC") %>% 
+  group_by(disbursement_description) %>%  
+  summarise(count = n()) %>% 
+  arrange(desc(count))
 
+# American Made Media Consultants were paid the most for online advertising with a count of 42.
 
-
-
+# How I came to this answer: I filtered the data to reflect only American Made Media Consultants, then I grouped the data by its description, and finally I summarised the data to reflect what category they were paid the most for.
 
 ```
 
@@ -127,10 +142,14 @@ What's the most common category overall (see "disbursement_description") the cam
 
 ```{r}
 
+payments %>% 
+  group_by(disbursement_description) %>% 
+  summarise(count = n()) %>% 
+  arrange(desc(count))
 
+# Merchant Fees, with a count of 1,002, was the most common category that the campaign spent money on.
 
-
-
+#How I came to this answer: Similar to the previous question, I did the same steps but I took out the filter that was solely for American Made Media Consultants.
 
 ```
 
@@ -138,11 +157,15 @@ Who were the 5 biggest recipients of campaign spending on "LEGAL CONSULTING"..?
 
 ```{r}
 
+payments %>% 
+  filter(disbursement_description == "LEGAL CONSULTING") %>% 
+  group_by(recipient_name) %>% 
+  summarise(total_amt = sum(disbursement_amount)) %>% 
+  arrange(desc(total_amt))
 
+# The top 5 legal consulting recipients, in descending order are: Jones Day ($4,390,351.66), Larocca Hornik Rosen Greenberg & Blaha LLP ($404,774.48), Kasowitz Benson Toress & Friedman ($322,614.29), The Law Offices of Alan S. Futerfas ($287,924), and McDermott Will & Emery ($276,278).
 
-
-
-
+# How I came to this answer: I initially struggled with this one; at first I forgot to summarise by total amount and was instead summarising by count. It attained similar results, but upon re-checking my work, I realized I forgot to summarize the total disbursement amount.  
 
 ```
 
@@ -151,11 +174,15 @@ Who are the top 5 individuals (vs. organization) were paid by the campaign commi
 
 ```{r}
 
+payments %>% 
+  filter(entity_type == "IND") %>% 
+  group_by(recipient_name) %>% 
+  summarise(total_amt = sum(disbursement_amount)) %>% 
+  arrange(desc(total_amt))
 
+# The Top 5 individuals paid by the campaign committee, in descending order, are Michael Glassner ($511,280), Sean Dollman ($389,541.09), Darren Centinello ($214,934.25), Christopher Carr ($160,000), and John Pence ($104,244.03).
 
-
-
-
+# How I came to this answer: Same steps as previous question but filtering by individuals ("IND") instead of organizations.
 
 ```
 
@@ -164,10 +191,18 @@ For the indvidual who was paid the most, which payment category (disbursement_de
 
 ```{r}
 
+payments %>% filter(recipient_name == "GLASSNER, MICHAEL") -> michael_glassner_payments
+  
+michael_glassner_payments %>% 
+  group_by(disbursement_description) %>% 
+  summarise(count = n())
 
+michael_glassner_payments %>% 
+  filter(disbursement_description == "PAYROLL") %>% 
+  summarise(total_amt = sum(disbursement_amount))
 
+# Michael Glassner, who was paid the most, was paid the most in PAYROLL, a total of 49 times. From the payroll category, they were paid $499,000.
 
-
-
+# How I came to this answer: I first created a data set for Michael Glassner, knowing that his data would be the one I'd be working with. I then sorted which category/description he was paid the most under, which ended up being payroll. I then filtered the data to show payroll, and how much he was paid from that category. 
 
 ```
